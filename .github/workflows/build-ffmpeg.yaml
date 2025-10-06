@@ -27,7 +27,7 @@ jobs:
           echo git-sha=$git_sha >> $GITHUB_OUTPUT
           echo git-sha-short=${git_sha::7} >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.TOKEN_REPO }}
+          GH_TOKEN: ${{ github.token }}
           
       - name: Get ${{ vars.FWBH_REPOSITORY_OWNER }}/ffmpeg-windows-build-helpers latest commit
         id: ffmpeg-helper-info
@@ -38,7 +38,7 @@ jobs:
           echo git-sha=$git_sha >> $GITHUB_OUTPUT
           echo git-sha-short=${git_sha::7} >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.TOKEN_REPO }}
+          GH_TOKEN: ${{ github.token }}
           
       - name: Get ffmpeg-autobuild latest build
         id: ffmpeg-autobuild-info
@@ -54,7 +54,7 @@ jobs:
             echo helper-git-sha=${tag_name:25:7} >> $GITHUB_OUTPUT
            fi
         env:
-          GH_TOKEN: ${{ secrets.TOKEN_REPO }}
+          GH_TOKEN: ${{ github.token }}
           
       - name: Check if there is newer commit
         if: '! inputs.force_build'
