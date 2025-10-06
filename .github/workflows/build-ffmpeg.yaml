@@ -23,22 +23,25 @@ jobs:
       - name: Get FFmpeg latest commit
         id: ffmpeg-info
         run: |
-          version=$(curl -s https://endoflife.date/api/ffmpeg.json | jq -r .[0].latest)
-          echo version=${version%.0} >> $GITHUB_OUTPUT
+          git_sha=$(gh api repos/FFmpeg/FFmpeg/commits/master -q .sha)
+          echo git-sha=$git_sha >> $GITHUB_OUTPUT
+          echo git-sha-short=${git_sha::7} >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Get ${{ inputs.use_own_fork && github.repository_owner || '' }}/ffmpeg-windows-build-helpers latest commit
+      - name: Get ${{ vars.FWBH_REPOSITORY_OWNER }}/ffmpeg-windows-build-helpers latest commit
         id: ffmpeg-helper-info
         run: |
-          git_owner=${{ inputs.use_own_fork && github.repository_owner || 'xdeadboy666x' }}
+          git_owner=${{ vars.FWBH_REPOSITORY_OWNER }}
           git_sha=$(gh api repos/$git_owner/ffmpeg-windows-build-helpers/commits/master -q .sha)
           echo git-owner=$git_owner >> $GITHUB_OUTPUT
           echo git-sha=$git_sha >> $GITHUB_OUTPUT
           echo git-sha-short=${git_sha::7} >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Get ffmpeg-stable-autobuild latest build
-        id: ffmpeg-stable-autobuild-info
+      - name: Get ffmpeg-autobuild latest build
+        id: ffmpeg-autobuild-info
         run: |
           tag_name=$(gh api repos/$GITHUB_REPOSITORY/releases/latest -q .tag_name || echo "fallback-tag")
     
@@ -51,7 +54,7 @@ jobs:
             echo helper-git-sha=${tag_name:25:7} >> $GITHUB_OUTPUT
            fi
         env:
-           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Check if there is newer commit
         if: '! inputs.force_build'
