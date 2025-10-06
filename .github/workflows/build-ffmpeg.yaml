@@ -1,7 +1,7 @@
 name: Build FFmpeg
 on:
-  schedule:
-    - cron: '7 11 * * 0'
+#  schedule:
+#    - cron: '7 11 * * 0'
   workflow_dispatch:
     inputs:
       force_build:
@@ -43,9 +43,16 @@ jobs:
       - name: Get ffmpeg-autobuild latest build
         id: ffmpeg-autobuild-info
         run: |
-          tag_name=$(gh api repos/$GITHUB_REPOSITORY/releases/latest -q .tag_name)
-          echo git-sha=${tag_name:17:7} >> $GITHUB_OUTPUT
-          echo helper-git-sha=${tag_name:25:7} >> $GITHUB_OUTPUT
+          tag_name=$(gh api repos/$GITHUB_REPOSITORY/releases/latest -q .tag_name || echo "fallback-tag")
+    
+          if [[ "$tag_name" == "fallback-tag" ]]; then
+            echo "Failed to fetch latest release tag, using fallback values"
+            echo git-sha=unknown >> $GITHUB_OUTPUT
+            echo helper-git-sha=unknown >> $GITHUB_OUTPUT
+           else
+            echo git-sha=${tag_name:17:7} >> $GITHUB_OUTPUT
+            echo helper-git-sha=${tag_name:25:7} >> $GITHUB_OUTPUT
+           fi
         env:
           GITHUB_TOKEN: ${{ github.token }}
           
@@ -67,7 +74,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        os: [win64, win32]
+        os: [win64]
         
     steps:
       - name: Checkout ${{ needs.check.outputs.helper-git-owner }}/ffmpeg-windows-build-helpers
@@ -103,7 +110,7 @@ jobs:
         run: echo date-time=$(date +'%Y-%m-%d %H:%M') >> $GITHUB_OUTPUT
         
       - name: Compile FFmpeg ${{ needs.check.outputs.git-sha-short }} using ffmpeg-windows-build-helpers ${{ needs.check.outputs.helper-git-sha-short }}
-        run: ./cross_compile_ffmpeg.sh --ffmpeg-source-dir=$GITHUB_WORKSPACE/ffmpeg-source --gcc-cpu-count=$(nproc) --disable-nonfree=n --sandbox-ok=y --compiler-flavors=${{ matrix.os }}
+        run: ./cross_compile_ffmpeg.sh --ffmpeg-source-dir=$GITHUB_WORKSPACE/ffmpeg-source --gcc-cpu-count=$(nproc) --disable-nonfree=n --sandbox-ok=y --compiler-flavors=${{ matrix.os }} --disable-debug=y --disable-doc=y --disable-ffplay=y --disable-htmlpages=y --disable-manpages=y --disable-podpages=y --disable-shared=y --disable-txtpages=y --enable-amf=y --enable-audiotoolbox=y --enable-avisynth=y --enable-bzlib=y --enable-chromaprint=y --enable-cuda=y --enable-cuda-llvm=y --enable-cuvid=y --enable-d3d11va=y --enable-d3d12va=y --enable-decklink=y --enable-decoder=aac=y --enable-decoder=h264=y --enable-decoder=mpeg4=y --enable-demuxer=m4v=y --enable-demuxer=mov=y --enable-dxva2=y --enable-ffnvcodec=y --enable-filter=drawtext=y --enable-fontconfig=y --enable-frei0r=y --enable-gmp=y --enable-gnutls=y --enable-gpl=y --enable-gray=y --enable-hardcoded-tables=y --enable-hwaccel=cuda=y --enable-iconv=y --enable-ladspa=y --enable-lcms2=y --enable-libaom=y --enable-libaribb24=y --enable-libaribcaption=y --enable-libass=y --enable-libbluray=y --enable-libbs2b=y --enable-libcaca=y --enable-libcdio=y --enable-libcelt=y --enable-libcodec2=y --enable-libdav1d=y --enable-libdavs2=y --enable-libdvdnav=y --enable-libdvdread=y --enable-libfdk-aac=y --enable-libflite=y --enable-libfontconfig=y --enable-libfreetype=y --enable-libfribidi=y --enable-libglslang=y --enable-libgme=y --enable-libgsm=y --enable-libharfbuzz=y --enable-libilbc=y --enable-libjxl=y --enable-libkvazaar=y --enable-liblc3=y --enable-liblensfun=y --enable-libmfx=y --enable-libmodplug=y --enable-libmp3lame=y --enable-libmysofa=y --enable-liboapv=y --enable-libopencore-amrnb=y --enable-libopencore-amrwb=y --enable-libopenh264=y --enable-libopenjpeg=y --enable-libopenmpt=y --enable-libopus=y --enable-libplacebo=y --enable-librav1e=y --enable-librist=y --enable-librubberband=y --enable-libshaderc=y --enable-libshine=y --enable-libsnappy=y --enable-libsoxr=y --enable-libspeex=y --enable-libsrt=y --enable-libssh=y --enable-libsvtav1=y --enable-libtesseract=y --enable-libtheora=y --enable-libtwolame=y --enable-libuavs3d=y --enable-libvidstab=y --enable-libvmaf=y --enable-libvo-amrwbenc=y --enable-libvorbis=y --enable-libvpl=y --enable-libvpx=y --enable-libvvenc=y --enable-libwebp=y --enable-libx264=y --enable-libx265=y --enable-libxavs=y --enable-libxavs2=y --enable-libxevd=y --enable-libxeve=y --enable-libxml2=y --enable-libxvid=y --enable-libzimg=y --enable-libzmq=y --enable-libzvbi=y --enable-lzma=y --enable-muxer=mov=y --enable-muxer=mp4=y --enable-nonfree=y --enable-nvdec=y --enable-nvenc=y --enable-openal=y --enable-opencl=y --enable-opengl=y --enable-parser=aac=y --enable-parser=h264=y --enable-parser=mpeg4video=y --enable-qsv=y --enable-schannel=y --enable-sdl2=y --enable-small=y --enable-static=y --enable-vaapi=y --enable-vdpau=y --enable-version3=y --enable-vulkan=y --enable-whisper=y --enable-zlib=y --extra-cflags='-mtune=generic'=y --extra-cflags=-DCACA_STATIC=y --extra-cflags=-DLIBTWOLAME_STATIC=y --extra-cflags=-DMODPLUG_STATIC=y --extra-cflags=-O3=y --extra-libs=-lfreetype=y --extra-libs=-lm=y --extra-libs=-lmpg123=y --extra-libs=-lpng=y --extra-libs=-lpthread=y --extra-libs=-lshlwapi=y --extra-libs=-lz=y
         
       - name: Get current date & time after build
         id: date-time-after
